@@ -44,6 +44,7 @@ let conn = null;
 let currentFilters = { yearMin: 2005, yearMax: 2024, region: '', rowTypes: ['region', 'province_city'] };
 const charts = {};
 let phMap = null;
+let lastHeatmapKey = ''; // Cache key to avoid redundant renders
 
 // ── Helpers ───────────────────────────────────────────────────
 function setStatus(state, msg) { statusEl.className = state; statusText.textContent = msg; }
@@ -84,6 +85,17 @@ function setTab(idx) {
   tabBtns[currentTabIdx].classList.add('active');
   $(`tab-${TAB_NAMES[currentTabIdx]}`).classList.add('active');
   updatePaging();
+
+  // Lazy-render: only build heavy charts when their tab is activated
+  const tab = TAB_NAMES[currentTabIdx];
+  if (tab === 'heatmap' && conn) {
+    renderHeatmap();
+    renderMap();
+  } else if (tab === 'trends' && conn) {
+    renderYoy();
+  } else if (tab === 'rankings' && conn) {
+    renderRankings();
+  }
 }
 
 tabBtns.forEach((btn, i) => btn.addEventListener('click', () => setTab(i)));
@@ -144,6 +156,7 @@ function readFilters() {
 
 applyBtn.addEventListener('click', async () => {
   currentFilters = readFilters();
+  lastHeatmapKey = ''; // Invalidate cache
   setStatus('', 'Updating…');
   await renderAll();
   setStatus('ready', `Filtered · ${currentFilters.yearMin}–${currentFilters.yearMax}`);
@@ -327,10 +340,16 @@ async function renderProvinces() {
 // ── Heatmap (HTML table with colour-coded cells + tooltip + legend) ──
 async function renderHeatmap() {
   const metric = heatmapMetric.value;
+  const cacheKey = `${metric}_${currentFilters.yearMin}_${currentFilters.yearMax}_${currentFilters.region}`;
+  if (cacheKey === lastHeatmapKey) return; // Skip if nothing changed
+  lastHeatmapKey = cacheKey;
+
   const metricLabels = { amount_millions: 'Revenue (₱M)', yoy_pct: 'YoY Growth (%)', share_of_national_pct: 'National Share (%)' };
   const metricAgg = { amount_millions: 'SUM', yoy_pct: 'AVG', share_of_national_pct: 'AVG' };
-  $('heatmapTitle').textContent = `Region × Year Heatmap — ${metricLabels[metric] || metric}`;
-  $('heatmapQueryMetric').textContent = `${metricAgg[metric] || 'SUM'}(${metric})`;
+  $('heatmapTitle').textContent = `Region × Year — ${metricLabels[metric] || metric}`;
+
+  // Show loading skeleton
+  $('heatmapContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:2rem;gap:0.6rem;"><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div><span style="font-size:0.75rem;color:var(--muted);">Querying DuckDB…</span></div>';
 
   const data = await getHeatmapData(conn, currentFilters, metric);
   if (!data.length) { $('heatmapContainer').innerHTML = '<p style="color:var(--muted);padding:2rem;text-align:center;">No data for current filters</p>'; return; }
@@ -552,16 +571,20 @@ async function renderRankings() {
 
 // ── Master render ─────────────────────────────────────────────
 async function renderAll() {
+  // Only render the Overview tab on initial load / filter apply.
+  // Heatmap, Trends, Rankings are lazy-loaded when their tab opens.
   await Promise.all([
     renderKpis(),
     renderTrend(),
     renderRegionBar(),
     renderProvinces(),
-    renderHeatmap(),
-    renderMap(),
-    renderYoy(),
-    renderRankings(),
   ]);
+
+  // If user is already on a non-overview tab, render it now
+  const tab = TAB_NAMES[currentTabIdx];
+  if (tab === 'heatmap') { renderHeatmap(); renderMap(); }
+  else if (tab === 'trends') { renderYoy(); }
+  else if (tab === 'rankings') { renderRankings(); }
 }
 
 // ── Init ──────────────────────────────────────────────────────
@@ -589,6 +612,7 @@ async function init() {
 
     // Listen for heatmap metric change
     heatmapMetric.addEventListener('change', () => {
+      lastHeatmapKey = ''; // Invalidate cache
       renderHeatmap();
       renderMap();
     });
