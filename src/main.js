@@ -70,14 +70,51 @@ const PALETTE = [
 ];
 
 // ── Tabs ──────────────────────────────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    $(`tab-${btn.dataset.tab}`).classList.add('active');
-  });
-});
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+const TAB_NAMES = ['overview', 'heatmap', 'trends', 'rankings'];
+let currentTabIdx = 0;
+
+function setTab(idx) {
+  currentTabIdx = Math.max(0, Math.min(TAB_NAMES.length - 1, idx));
+  tabBtns.forEach(b => b.classList.remove('active'));
+  tabPanels.forEach(p => p.classList.remove('active'));
+  tabBtns[currentTabIdx].classList.add('active');
+  $(`tab-${TAB_NAMES[currentTabIdx]}`).classList.add('active');
+  updatePaging();
+}
+
+tabBtns.forEach((btn, i) => btn.addEventListener('click', () => setTab(i)));
+
+// ── Paging arrows ─────────────────────────────────────────────
+const pagePrev = $('pagePrev');
+const pageNext = $('pageNext');
+const pageInfo = $('pageInfo');
+
+function updatePaging() {
+  pageInfo.textContent = `${currentTabIdx + 1} / ${TAB_NAMES.length}`;
+  pagePrev.disabled = currentTabIdx === 0;
+  pageNext.disabled = currentTabIdx === TAB_NAMES.length - 1;
+}
+
+pagePrev.addEventListener('click', () => setTab(currentTabIdx - 1));
+pageNext.addEventListener('click', () => setTab(currentTabIdx + 1));
+updatePaging();
+
+// ── Theme toggle ──────────────────────────────────────────────
+const themeToggle = $('themeToggle');
+function getTheme() { return document.documentElement.getAttribute('data-theme'); }
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  // Update chart grid colors
+  Chart.defaults.borderColor = t === 'dark' ? '#1e2d48' : '#e8ecf0';
+  Chart.defaults.color = t === 'dark' ? '#7b8ba3' : '#64748b';
+}
+themeToggle.addEventListener('click', () => setTheme(getTheme() === 'dark' ? 'light' : 'dark'));
+// Restore saved theme
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) setTheme(savedTheme);
 
 // ── Filter controls ───────────────────────────────────────────
 yearMin.addEventListener('input', () => {
