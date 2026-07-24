@@ -6,327 +6,237 @@
     <title>BIR Revenue Dashboard — Interactive</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
       :root {
-        --bg:        #0d1117;
-        --surface:   #161b22;
-        --surface2:  #1c2333;
-        --border:    #30363d;
-        --text:      #e6edf3;
-        --muted:     #7d8590;
-        --accent:    #388bfd;
-        --green:     #3fb950;
-        --red:       #f85149;
-        --gold:      #d29922;
-        --purple:    #bc8cff;
-        --teal:      #39c5cf;
-        --radius:    10px;
-        --shadow:    0 2px 8px rgba(0,0,0,.3);
+        --bg: #0d1117; --surface: #161b22; --surface2: #1c2333;
+        --border: #30363d; --text: #e6edf3; --muted: #7d8590;
+        --accent: #388bfd; --green: #3fb950; --red: #f85149;
+        --gold: #d29922; --purple: #bc8cff; --teal: #39c5cf;
+        --radius: 10px; --shadow: 0 2px 8px rgba(0,0,0,.3);
       }
-
+      html, body { height: 100%; overflow: hidden; }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        min-height: 100vh;
-        overflow: hidden;
+        background: var(--bg); color: var(--text);
       }
+
+      /* ── Animations ─────────────────────── */
+      @keyframes fadeSlideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes fadeSlideLeft { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes breathe { 0%,100%{ box-shadow: 0 0 0 0 rgba(56,139,253,.2); } 50%{ box-shadow: 0 0 0 6px rgba(56,139,253,0); } }
+      @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+      @keyframes modalIn { from { opacity:0; transform:scale(.92) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+      .anim-slide-up { animation: fadeSlideUp .4s ease-out both; }
+      .anim-slide-left { animation: fadeSlideLeft .35s ease-out both; }
 
       /* ── Header ─────────────────────────── */
       header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid var(--border);
-        background: var(--surface);
-        position: sticky;
-        top: 0;
-        z-index: 50;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.7rem 1.5rem; border-bottom: 1px solid var(--border);
+        background: var(--surface); position: relative; z-index: 50; height: 50px;
       }
-
-      .header-left h1 { font-size: 1.3rem; font-weight: 700; }
-      .header-left p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-
+      .header-left h1 { font-size: 1.15rem; font-weight: 700; }
+      .header-left p { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
       .header-right { display: flex; gap: 0.5rem; align-items: center; }
-
-      #status {
-        display: inline-flex; align-items: center; gap: 0.4rem;
-        font-size: 0.72rem; color: var(--muted);
-      }
+      #status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; color: var(--muted); }
       .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: pulse 1.4s infinite; }
       #status.ready .dot { background: var(--green); animation: none; }
       #status.error .dot { background: var(--red); animation: none; }
-      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
 
       /* ── Buttons ────────────────────────── */
       .btn {
         display: inline-flex; align-items: center; gap: 0.4rem;
-        padding: 0.45rem 0.85rem;
-        font-size: 0.78rem; font-weight: 500;
+        padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 500;
         border-radius: 6px; border: 1px solid var(--border);
         background: var(--surface2); color: var(--text);
-        cursor: pointer; transition: all .15s;
+        cursor: pointer; transition: all .15s; position: relative; overflow: hidden;
       }
-      .btn:hover { background: var(--border); border-color: var(--accent); }
+      .btn:hover { background: var(--border); border-color: var(--accent); transform: translateY(-1px); }
+      .btn:active { transform: translateY(0); }
       .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
       .btn-primary:hover { background: #1d6fdb; }
-      .btn svg { width: 14px; height: 14px; }
+      .btn svg { width: 13px; height: 13px; }
+      /* Ripple effect */
+      .btn .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,.3); transform: scale(0); animation: ripple .5s linear; pointer-events: none; }
 
-      /* ── Layout ─────────────────────────── */
+      /* ── Layout — FIXED viewport, no scroll ── */
       .layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        height: calc(100vh - 56px);
-        overflow: hidden;
+        display: grid; grid-template-columns: 260px 1fr;
+        height: calc(100vh - 50px); overflow: hidden;
       }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
-      @media (max-width: 900px) {
-        .layout { grid-template-columns: 1fr; }
-        .sidebar { position: fixed; left: -300px; top: 56px; bottom: 0; width: 280px; z-index: 40; transition: left .3s; }
-        .sidebar.open { left: 0; }
-      }
-
-      /* ── Sidebar / Filters ──────────────── */
+      /* ── Sidebar ────────────────────────── */
       .sidebar {
-        background: var(--surface);
-        border-right: 1px solid var(--border);
-        padding: 1.25rem;
-        overflow-y: auto;
-        height: 100%;
+        background: var(--surface); border-right: 1px solid var(--border);
+        padding: 1rem; display: flex; flex-direction: column; overflow: hidden;
       }
-
-      .filter-section { margin-bottom: 1.25rem; }
-      .filter-section h3 {
-        font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em;
-        color: var(--muted); margin-bottom: 0.5rem;
-      }
-
-      select, input[type=range] {
-        width: 100%; background: var(--surface2); border: 1px solid var(--border);
-        color: var(--text); border-radius: 6px; padding: 0.4rem 0.6rem;
-        font-size: 0.82rem; outline: none; cursor: pointer;
-      }
+      .sidebar-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+      .sidebar-scroll::-webkit-scrollbar { display: none; }
+      .filter-section { margin-bottom: 1rem; }
+      .filter-section h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 0.4rem; }
+      select, input[type=range] { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.35rem 0.5rem; font-size: 0.78rem; outline: none; cursor: pointer; }
       select:focus { border-color: var(--accent); }
-
-      .range-label {
-        display: flex; justify-content: space-between;
-        font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem;
-      }
-
-      .checkbox-group { display: flex; flex-direction: column; gap: 0.35rem; }
-      .checkbox-group label {
-        display: flex; align-items: center; gap: 0.5rem;
-        font-size: 0.82rem; cursor: pointer;
-      }
+      .range-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+      .checkbox-group { display: flex; flex-direction: column; gap: 0.3rem; }
+      .checkbox-group label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; cursor: pointer; }
       .checkbox-group input[type=checkbox] { accent-color: var(--accent); }
+      .filter-actions { display: flex; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); margin-top: auto; }
 
-      .filter-actions {
-        display: flex; gap: 0.5rem; margin-top: 1rem;
-        padding-top: 1rem; border-top: 1px solid var(--border);
-      }
-
-      /* ── Main content ───────────────────── */
-      .main-content {
-        padding: 1.5rem 2rem;
-        overflow-y: auto;
-        height: 100%;
-        scroll-behavior: smooth;
-      }
+      /* ── Main content — inner scroll hidden ── */
+      .main-content { padding: 1rem 1.5rem; overflow-y: auto; overflow-x: hidden; height: 100%; scrollbar-width: none; }
+      .main-content::-webkit-scrollbar { display: none; }
 
       /* ── Tabs ───────────────────────────── */
-      .tabs {
-        display: flex; gap: 0; margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border);
-      }
-      .tab-btn {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.82rem; font-weight: 500;
-        color: var(--muted); background: none; border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer; transition: all .15s;
-      }
+      .tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+      .tab-btn { padding: 0.5rem 1rem; font-size: 0.78rem; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all .2s; }
       .tab-btn:hover { color: var(--text); }
       .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-      .tab-panel { display: none; }
+      .tab-panel { display: none; animation: fadeSlideUp .3s ease-out; }
       .tab-panel.active { display: block; }
 
-      /* ── KPI Cards ──────────────────────── */
-      .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 0.9rem; margin-bottom: 1.5rem;
-      }
+      /* ── KPI Cards with tilt + breathe ──── */
+      .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
       .kpi-card {
         background: var(--surface); border: 1px solid var(--border);
-        border-radius: var(--radius); padding: 1rem 1.1rem;
-        transition: transform .2s, box-shadow .2s;
+        border-radius: var(--radius); padding: 0.85rem 1rem;
+        transition: transform .25s cubic-bezier(.25,.46,.45,.94), box-shadow .25s;
+        cursor: default; animation: breathe 3s ease-in-out infinite;
+        transform-style: preserve-3d; perspective: 600px;
       }
-      .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-      .kpi-card .kpi-label {
-        font-size: 0.68rem; text-transform: uppercase;
-        letter-spacing: .06em; color: var(--muted); margin-bottom: 0.3rem;
-      }
-      .kpi-card .kpi-value { font-size: 1.4rem; font-weight: 700; }
-      .kpi-card .kpi-badge {
-        display: inline-block; margin-top: 0.3rem;
-        font-size: 0.7rem; font-weight: 600;
-        padding: 0.12rem 0.4rem; border-radius: 999px;
-      }
+      .kpi-card:hover { transform: translateY(-3px) rotateX(2deg) rotateY(-2deg); box-shadow: 0 8px 20px rgba(0,0,0,.4); animation: none; }
+      .kpi-card .kpi-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 0.25rem; }
+      .kpi-card .kpi-value { font-size: 1.3rem; font-weight: 700; }
+      .kpi-card .kpi-badge { display: inline-block; margin-top: 0.25rem; font-size: 0.66rem; font-weight: 600; padding: 0.1rem 0.35rem; border-radius: 999px; }
       .badge-up { background: rgba(63,185,80,.15); color: var(--green); }
       .badge-down { background: rgba(248,81,73,.15); color: var(--red); }
 
-      /* ── Chart cards ────────────────────── */
-      .charts-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-        gap: 1.25rem;
-      }
+      /* ── Chart cards with hover lift ────── */
+      .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1rem; }
       .chart-card {
         background: var(--surface); border: 1px solid var(--border);
-        border-radius: var(--radius); padding: 1.25rem;
-        transition: box-shadow .2s;
+        border-radius: var(--radius); padding: 1rem 1.1rem;
+        transition: transform .2s, box-shadow .2s, border-color .2s;
       }
-      .chart-card:hover { box-shadow: var(--shadow); }
+      .chart-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--accent); }
       .chart-card.full-width { grid-column: 1 / -1; }
-      .chart-card h2 {
-        font-size: 0.82rem; font-weight: 600; color: var(--muted);
-        text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1rem;
-      }
+      .chart-card h2 { font-size: 0.76rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 0.8rem; }
       canvas { max-width: 100%; }
 
       /* ── Heatmap ────────────────────────── */
-      .heatmap-container {
-        overflow-x: auto;
-        overflow-y: auto;
-        max-height: 520px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        position: relative;
-      }
-      .heatmap-table {
-        border-collapse: collapse; width: 100%; font-size: 0.72rem;
-      }
-      .heatmap-table th, .heatmap-table td {
-        padding: 0.35rem 0.45rem; text-align: center;
-        border: 1px solid var(--border);
-        transition: transform .1s, box-shadow .1s;
-        cursor: default;
-      }
-      .heatmap-table td:hover {
-        transform: scale(1.15);
-        box-shadow: 0 0 0 2px var(--accent);
-        z-index: 5; position: relative;
-        border-radius: 3px;
-      }
-      .heatmap-table th {
-        background: var(--surface2); color: var(--muted);
-        font-weight: 600; position: sticky; top: 0; z-index: 10;
-      }
-      .heatmap-table .region-label {
-        text-align: left; font-weight: 500; color: var(--text);
-        background: var(--surface2); position: sticky; left: 0; min-width: 160px; z-index: 8;
-      }
-
-      .heatmap-legend {
-        display: flex; align-items: center; gap: 0.6rem;
-        margin-bottom: 0.75rem; font-size: 0.72rem; color: var(--muted);
-      }
-      .legend-gradient {
-        width: 160px; height: 12px; border-radius: 4px;
-        border: 1px solid var(--border);
-      }
+      .heatmap-container { overflow: auto; max-height: 420px; border: 1px solid var(--border); border-radius: 8px; scrollbar-width: none; }
+      .heatmap-container::-webkit-scrollbar { display: none; }
+      .heatmap-table { border-collapse: collapse; width: 100%; font-size: 0.68rem; }
+      .heatmap-table th, .heatmap-table td { padding: 0.3rem 0.4rem; text-align: center; border: 1px solid var(--border); transition: transform .1s, box-shadow .1s; cursor: default; }
+      .heatmap-table td:hover { transform: scale(1.2); box-shadow: 0 0 0 2px var(--accent); z-index: 5; position: relative; border-radius: 3px; }
+      .heatmap-table th { background: var(--surface2); color: var(--muted); font-weight: 600; position: sticky; top: 0; z-index: 10; }
+      .heatmap-table .region-label { text-align: left; font-weight: 500; color: var(--text); background: var(--surface2); position: sticky; left: 0; min-width: 150px; z-index: 8; }
+      .heatmap-legend { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; font-size: 0.68rem; color: var(--muted); }
+      .legend-gradient { width: 140px; height: 10px; border-radius: 4px; border: 1px solid var(--border); }
       .legend-label { font-weight: 500; }
-      .legend-range { margin-left: auto; font-size: 0.68rem; }
-
-      .heatmap-tooltip {
-        position: fixed; padding: 0.5rem 0.75rem;
-        background: var(--surface); border: 1px solid var(--accent);
-        border-radius: 6px; font-size: 0.75rem; color: var(--text);
-        pointer-events: none; z-index: 100; display: none;
-        box-shadow: 0 4px 12px rgba(0,0,0,.5);
-        max-width: 220px;
-      }
+      .legend-range { margin-left: auto; font-size: 0.64rem; }
+      .heatmap-tooltip { position: fixed; padding: 0.45rem 0.7rem; background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; font-size: 0.72rem; color: var(--text); pointer-events: none; z-index: 100; display: none; box-shadow: 0 4px 12px rgba(0,0,0,.5); max-width: 220px; }
       .heatmap-tooltip.visible { display: block; }
+      .heatmap-api-info { margin-top: 0.6rem; padding: 0.4rem 0.6rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-size: 0.64rem; color: var(--muted); overflow-x: auto; }
+      .heatmap-api-info code { font-family: 'JetBrains Mono', Consolas, monospace; }
 
-      .heatmap-api-info {
-        margin-top: 0.75rem; padding: 0.5rem 0.75rem;
-        background: var(--surface2); border: 1px solid var(--border);
-        border-radius: 6px; font-size: 0.68rem; color: var(--muted);
-        overflow-x: auto;
-      }
-      .heatmap-api-info code { font-family: 'JetBrains Mono', monospace; }
-
-      /* ── Export modal ───────────────────── */
+      /* ── Modals — shared styles ─────────── */
       .modal-overlay {
-        position: fixed; inset: 0; background: rgba(0,0,0,.7);
-        display: none; align-items: center; justify-content: center; z-index: 100;
+        position: fixed; inset: 0; background: rgba(0,0,0,.75);
+        display: none; align-items: center; justify-content: center; z-index: 200;
+        backdrop-filter: blur(4px);
       }
       .modal-overlay.open { display: flex; }
       .modal {
         background: var(--surface); border: 1px solid var(--border);
-        border-radius: 12px; padding: 2rem; width: 90%; max-width: 420px;
+        border-radius: 14px; padding: 1.75rem; width: 92%; max-width: 480px;
+        animation: modalIn .3s ease-out;
+        box-shadow: 0 20px 60px rgba(0,0,0,.6);
       }
-      .modal h3 { font-size: 1.1rem; margin-bottom: 1rem; }
-      .modal .export-options { display: flex; flex-direction: column; gap: 0.75rem; }
-      .modal .export-option {
-        padding: 0.8rem 1rem; border: 1px solid var(--border);
-        border-radius: 8px; cursor: pointer; transition: all .15s;
-        display: flex; align-items: center; gap: 0.8rem;
-      }
-      .modal .export-option:hover { border-color: var(--accent); background: var(--surface2); }
-      .modal .export-option .icon { font-size: 1.5rem; }
-      .modal .export-option .label { font-weight: 500; }
-      .modal .export-option .desc { font-size: 0.75rem; color: var(--muted); }
+      .modal h3 { font-size: 1.05rem; margin-bottom: 1rem; font-weight: 700; }
+      .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.2rem; }
+      .modal-close:hover { color: var(--text); }
+
+      /* Export modal */
+      .export-options { display: flex; flex-direction: column; gap: 0.65rem; }
+      .export-option { padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 0.75rem; }
+      .export-option:hover { border-color: var(--accent); background: var(--surface2); transform: translateX(4px); }
+      .export-option .icon { font-size: 1.4rem; }
+      .export-option .label { font-weight: 500; font-size: 0.85rem; }
+      .export-option .desc { font-size: 0.72rem; color: var(--muted); }
+
+      /* Detail modal */
+      .detail-content { max-height: 320px; overflow-y: auto; scrollbar-width: none; }
+      .detail-content::-webkit-scrollbar { display: none; }
+      .detail-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+      .detail-table th, .detail-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); text-align: left; }
+      .detail-table th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; }
+      .detail-table tr:hover td { background: var(--surface2); }
+
+      /* Fullscreen chart modal */
+      .fullscreen-chart { width: 100%; height: 70vh; }
 
       /* ── Loading overlay ────────────────── */
-      #loading-overlay {
-        position: fixed; inset: 0;
-        background: rgba(13,17,23,.94);
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 1rem; z-index: 200; transition: opacity .4s;
-      }
+      #loading-overlay { position: fixed; inset: 0; background: rgba(13,17,23,.96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; z-index: 300; transition: opacity .4s; }
       #loading-overlay.hidden { opacity: 0; pointer-events: none; }
-      .spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      #loading-msg { font-size: 0.82rem; color: var(--muted); }
+      .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+      #loading-msg { font-size: 0.78rem; color: var(--muted); }
 
       /* ── Footer ─────────────────────────── */
-      footer {
-        padding: 1rem 2rem; border-top: 1px solid var(--border);
-        font-size: 0.7rem; color: var(--muted); text-align: center;
-      }
+      footer { padding: 0.6rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.65rem; color: var(--muted); text-align: center; }
     </style>
   </head>
   <body>
-
     <!-- Loading -->
-    <div id="loading-overlay">
-      <div class="spinner"></div>
-      <div id="loading-msg">Initializing DuckDB WASM…</div>
-    </div>
+    <div id="loading-overlay"><div class="spinner"></div><div id="loading-msg">Initializing DuckDB WASM…</div></div>
 
     <!-- Export Modal -->
     <div class="modal-overlay" id="exportModal">
       <div class="modal">
-        <h3>Export Report</h3>
+        <h3>📥 Export Report</h3>
         <div class="export-options">
-          <div class="export-option" id="exportCSV">
-            <div class="icon">📄</div>
-            <div><div class="label">CSV Spreadsheet</div><div class="desc">Filtered data as .csv — opens in Excel</div></div>
-          </div>
-          <div class="export-option" id="exportJSON">
-            <div class="icon">📊</div>
-            <div><div class="label">JSON Data</div><div class="desc">Structured data for API consumption</div></div>
-          </div>
-          <div class="export-option" id="exportPNG">
-            <div class="icon">🖼️</div>
-            <div><div class="label">Dashboard Screenshot (PNG)</div><div class="desc">Current view as image — presentation ready</div></div>
-          </div>
+          <div class="export-option" id="exportCSV"><div class="icon">📄</div><div><div class="label">CSV Spreadsheet</div><div class="desc">Filtered data as .csv — opens in Excel</div></div></div>
+          <div class="export-option" id="exportJSON"><div class="icon">📊</div><div><div class="label">JSON Data</div><div class="desc">Structured data for API consumption</div></div></div>
+          <div class="export-option" id="exportPNG"><div class="icon">🖼️</div><div><div class="label">Dashboard Screenshot</div><div class="desc">Current view as PNG image</div></div></div>
         </div>
-        <button class="btn" style="margin-top:1.25rem; width:100%; justify-content:center;" id="closeModal">Cancel</button>
+        <button class="btn" style="margin-top:1rem; width:100%; justify-content:center;" id="closeExportModal">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Detail Drill-Down Modal -->
+    <div class="modal-overlay" id="detailModal">
+      <div class="modal" style="max-width:600px;">
+        <h3 id="detailTitle">📋 Region Detail</h3>
+        <div class="detail-content" id="detailContent"></div>
+        <button class="btn" style="margin-top:1rem; width:100%; justify-content:center;" id="closeDetailModal">Close</button>
+      </div>
+    </div>
+
+    <!-- Info / About Modal -->
+    <div class="modal-overlay" id="infoModal">
+      <div class="modal">
+        <h3>ℹ️ About This Dashboard</h3>
+        <p style="font-size:0.82rem; color:var(--muted); line-height:1.6; margin-bottom:0.8rem;">
+          Built during the KIRO Data Engineering Workshop. Powered by <b>DuckDB-WASM</b> running SQL queries directly in the browser against a pre-cleaned Parquet dataset.
+        </p>
+        <p style="font-size:0.75rem; color:var(--muted); line-height:1.5;">
+          <b>Dataset:</b> BIR PSCG Annual Collections CY 2005–2024<br>
+          <b>Records:</b> 2,480 (17 regions × 101 provinces × 20 years)<br>
+          <b>Pipeline:</b> Node.js + DuckDB → Parquet → DuckDB-WASM<br>
+          <b>Charts:</b> Chart.js v4 with animated transitions
+        </p>
+        <button class="btn btn-primary" style="margin-top:1rem; width:100%; justify-content:center;" id="closeInfoModal">Got it</button>
+      </div>
+    </div>
+
+    <!-- Fullscreen Chart Modal -->
+    <div class="modal-overlay" id="fullscreenModal">
+      <div class="modal" style="max-width:90vw; max-height:85vh; padding:1.5rem;">
+        <h3 id="fullscreenTitle">📈 Chart</h3>
+        <canvas id="fullscreenCanvas" class="fullscreen-chart"></canvas>
+        <button class="btn" style="margin-top:1rem; width:100%; justify-content:center;" id="closeFullscreenModal">Close</button>
       </div>
     </div>
 
@@ -338,6 +248,9 @@
       </div>
       <div class="header-right">
         <div id="status"><span class="dot"></span><span id="status-text">Loading…</span></div>
+        <button class="btn" id="btnInfo" title="About">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
         <button class="btn" id="btnExport">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export
@@ -348,51 +261,42 @@
     <div class="layout">
       <!-- Sidebar Filters -->
       <aside class="sidebar" id="sidebar">
-        <div class="filter-section">
-          <h3>Year Range</h3>
-          <input type="range" id="yearMin" min="2005" max="2024" value="2005" step="1" />
-          <input type="range" id="yearMax" min="2005" max="2024" value="2024" step="1" />
-          <div class="range-label">
-            <span id="yearMinLabel">2005</span>
-            <span>–</span>
-            <span id="yearMaxLabel">2024</span>
+        <div class="sidebar-scroll">
+          <div class="filter-section">
+            <h3>Year Range</h3>
+            <input type="range" id="yearMin" min="2005" max="2024" value="2005" step="1" />
+            <input type="range" id="yearMax" min="2005" max="2024" value="2024" step="1" />
+            <div class="range-label"><span id="yearMinLabel">2005</span><span>–</span><span id="yearMaxLabel">2024</span></div>
+          </div>
+          <div class="filter-section">
+            <h3>Region</h3>
+            <select id="regionFilter"><option value="">All Regions</option></select>
+          </div>
+          <div class="filter-section">
+            <h3>Row Type</h3>
+            <div class="checkbox-group" id="rowTypeFilter">
+              <label><input type="checkbox" value="region" checked /> Regions</label>
+              <label><input type="checkbox" value="province_city" checked /> Provinces/Cities</label>
+              <label><input type="checkbox" value="summary" /> Summary Rows</label>
+            </div>
+          </div>
+          <div class="filter-section">
+            <h3>Heatmap Metric</h3>
+            <select id="heatmapMetric">
+              <option value="amount_millions">Revenue (₱M)</option>
+              <option value="yoy_pct">YoY Growth (%)</option>
+              <option value="share_of_national_pct">National Share (%)</option>
+            </select>
           </div>
         </div>
-
-        <div class="filter-section">
-          <h3>Region</h3>
-          <select id="regionFilter">
-            <option value="">All Regions</option>
-          </select>
-        </div>
-
-        <div class="filter-section">
-          <h3>Row Type</h3>
-          <div class="checkbox-group" id="rowTypeFilter">
-            <label><input type="checkbox" value="region" checked /> Regions</label>
-            <label><input type="checkbox" value="province_city" checked /> Provinces/Cities</label>
-            <label><input type="checkbox" value="summary" /> Summary Rows</label>
-          </div>
-        </div>
-
-        <div class="filter-section">
-          <h3>Heatmap Metric</h3>
-          <select id="heatmapMetric">
-            <option value="amount_millions">Revenue (₱M)</option>
-            <option value="yoy_pct">YoY Growth (%)</option>
-            <option value="share_of_national_pct">National Share (%)</option>
-          </select>
-        </div>
-
         <div class="filter-actions">
-          <button class="btn btn-primary" id="applyFilters" style="flex:1;">Apply Filters</button>
+          <button class="btn btn-primary" id="applyFilters" style="flex:1;">Apply</button>
           <button class="btn" id="resetFilters">Reset</button>
         </div>
       </aside>
 
       <!-- Main Content -->
       <div class="main-content">
-        <!-- Tabs -->
         <div class="tabs">
           <button class="tab-btn active" data-tab="overview">Overview</button>
           <button class="tab-btn" data-tab="heatmap">Heatmap</button>
@@ -403,16 +307,16 @@
         <!-- Tab: Overview -->
         <div class="tab-panel active" id="tab-overview">
           <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-label">Net Collection</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-badge" id="kpi-yoy">—</div></div>
-            <div class="kpi-card"><div class="kpi-label">Gross Collection</div><div class="kpi-value" id="kpi-gross">—</div></div>
-            <div class="kpi-card"><div class="kpi-label">Tax Refund</div><div class="kpi-value" id="kpi-refund">—</div></div>
-            <div class="kpi-card"><div class="kpi-label">Top Region</div><div class="kpi-value" id="kpi-top-region" style="font-size:0.95rem;">—</div></div>
-            <div class="kpi-card"><div class="kpi-label">Filtered Records</div><div class="kpi-value" id="kpi-records">—</div></div>
+            <div class="kpi-card anim-slide-up" style="animation-delay:.05s"><div class="kpi-label">Net Collection</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-badge" id="kpi-yoy">—</div></div>
+            <div class="kpi-card anim-slide-up" style="animation-delay:.1s"><div class="kpi-label">Gross Collection</div><div class="kpi-value" id="kpi-gross">—</div></div>
+            <div class="kpi-card anim-slide-up" style="animation-delay:.15s"><div class="kpi-label">Tax Refund</div><div class="kpi-value" id="kpi-refund">—</div></div>
+            <div class="kpi-card anim-slide-up" style="animation-delay:.2s"><div class="kpi-label">Top Region</div><div class="kpi-value" id="kpi-top-region" style="font-size:0.9rem;">—</div></div>
+            <div class="kpi-card anim-slide-up" style="animation-delay:.25s"><div class="kpi-label">Records</div><div class="kpi-value" id="kpi-records">—</div></div>
           </div>
           <div class="charts-grid">
-            <div class="chart-card full-width"><h2>Collection Trend</h2><canvas id="trendChart"></canvas></div>
-            <div class="chart-card"><h2>Revenue by Region</h2><canvas id="regionBarChart"></canvas></div>
-            <div class="chart-card"><h2>Top Provinces / Cities</h2><canvas id="provinceChart"></canvas></div>
+            <div class="chart-card full-width anim-slide-up" style="animation-delay:.3s"><h2>Collection Trend <button class="btn" style="float:right;padding:0.2rem 0.5rem;font-size:0.65rem;" data-expand="trend">⛶</button></h2><canvas id="trendChart"></canvas></div>
+            <div class="chart-card anim-slide-up" style="animation-delay:.35s"><h2>Revenue by Region <button class="btn" style="float:right;padding:0.2rem 0.5rem;font-size:0.65rem;" data-detail="region">🔍</button></h2><canvas id="regionBarChart"></canvas></div>
+            <div class="chart-card anim-slide-up" style="animation-delay:.4s"><h2>Top Provinces / Cities</h2><canvas id="provinceChart"></canvas></div>
           </div>
         </div>
 
@@ -420,47 +324,24 @@
         <div class="tab-panel" id="tab-heatmap">
           <div class="chart-card full-width">
             <h2 id="heatmapTitle">Region × Year Heatmap — Revenue (₱M)</h2>
-
-            <!-- Heatmap legend -->
-            <div class="heatmap-legend" id="heatmapLegend">
-              <span class="legend-label">Low</span>
-              <div class="legend-gradient" id="legendGradient"></div>
-              <span class="legend-label">High</span>
-              <span class="legend-range" id="legendRange"></span>
-            </div>
-
-            <!-- Heatmap tooltip (follows cursor) -->
+            <div class="heatmap-legend"><span class="legend-label">Low</span><div class="legend-gradient" id="legendGradient"></div><span class="legend-label">High</span><span class="legend-range" id="legendRange"></span></div>
             <div class="heatmap-tooltip" id="heatmapTooltip"></div>
-
-            <!-- Heatmap grid -->
-            <div class="heatmap-container" id="heatmapContainer">
-              <p style="color:var(--muted); padding:2rem; text-align:center;">Loading heatmap…</p>
-            </div>
-
-            <!-- Heatmap API info -->
-            <div class="heatmap-api-info">
-              <code>Query: SELECT region, year, <span id="heatmapQueryMetric">SUM(amount_millions)</span> FROM collections WHERE row_type='region' GROUP BY region, year</code>
-            </div>
+            <div class="heatmap-container" id="heatmapContainer"><p style="color:var(--muted);padding:2rem;text-align:center;">Loading…</p></div>
+            <div class="heatmap-api-info"><code>Query: SELECT region, year, <span id="heatmapQueryMetric">SUM(amount_millions)</span> FROM collections WHERE row_type='region' GROUP BY region, year</code></div>
           </div>
         </div>
 
         <!-- Tab: Trends -->
         <div class="tab-panel" id="tab-trends">
-          <div class="charts-grid">
-            <div class="chart-card full-width"><h2>YoY Growth by Region (%)</h2><canvas id="yoyChart"></canvas></div>
-          </div>
+          <div class="charts-grid"><div class="chart-card full-width"><h2>YoY Growth by Region (%) <button class="btn" style="float:right;padding:0.2rem 0.5rem;font-size:0.65rem;" data-expand="yoy">⛶</button></h2><canvas id="yoyChart"></canvas></div></div>
         </div>
 
         <!-- Tab: Rankings -->
         <div class="tab-panel" id="tab-rankings">
-          <div class="charts-grid">
-            <div class="chart-card full-width"><h2>Province Revenue Rankings</h2><canvas id="rankChart"></canvas></div>
-          </div>
+          <div class="charts-grid"><div class="chart-card full-width"><h2>Province Revenue Rankings <button class="btn" style="float:right;padding:0.2rem 0.5rem;font-size:0.65rem;" data-expand="rank">⛶</button></h2><canvas id="rankChart"></canvas></div></div>
         </div>
 
-        <footer>
-          Source: Bureau of Internal Revenue · PSA–PSCG as of June 2024 · Dashboard powered by DuckDB-WASM + Chart.js
-        </footer>
+        <footer>Source: Bureau of Internal Revenue · PSA–PSCG June 2024 · DuckDB-WASM + Chart.js</footer>
       </div>
     </div>
 

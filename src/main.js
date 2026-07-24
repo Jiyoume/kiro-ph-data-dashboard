@@ -33,7 +33,7 @@ const applyBtn    = $('applyFilters');
 const resetBtn    = $('resetFilters');
 const exportBtn   = $('btnExport');
 const exportModal = $('exportModal');
-const closeModal  = $('closeModal');
+const closeModal  = $('closeExportModal');
 const exportCSV   = $('exportCSV');
 const exportJSON  = $('exportJSON');
 const exportPNG   = $('exportPNG');
@@ -503,3 +503,88 @@ async function init() {
 }
 
 init();
+
+// ── Additional Modals ─────────────────────────────────────────
+// Info modal
+$('btnInfo')?.addEventListener('click', () => $('infoModal').classList.add('open'));
+$('closeInfoModal')?.addEventListener('click', () => $('infoModal').classList.remove('open'));
+$('infoModal')?.addEventListener('click', (e) => { if (e.target.id === 'infoModal') $('infoModal').classList.remove('open'); });
+
+// Detail modal
+$('closeDetailModal')?.addEventListener('click', () => $('detailModal').classList.remove('open'));
+$('detailModal')?.addEventListener('click', (e) => { if (e.target.id === 'detailModal') $('detailModal').classList.remove('open'); });
+
+// Region detail drill-down button
+document.querySelector('[data-detail="region"]')?.addEventListener('click', async () => {
+  const data = await getFilteredRegions(conn, currentFilters);
+  if (!data.length) return;
+  $('detailTitle').textContent = '📋 Revenue by Region — Detail View';
+  let html = '<table class="detail-table"><thead><tr><th>Region</th><th style="text-align:right">Revenue (₱M)</th><th style="text-align:right">% of Total</th></tr></thead><tbody>';
+  const total = data.reduce((s, r) => s + Number(r.total), 0);
+  data.forEach(r => {
+    const pct = ((Number(r.total) / total) * 100).toFixed(1);
+    html += `<tr><td>${r.region}</td><td style="text-align:right">₱${Number(r.total).toLocaleString('en-PH', {maximumFractionDigits:0})}</td><td style="text-align:right">${pct}%</td></tr>`;
+  });
+  html += '</tbody></table>';
+  $('detailContent').innerHTML = html;
+  $('detailModal').classList.add('open');
+});
+
+// Fullscreen chart modal
+$('closeFullscreenModal')?.addEventListener('click', () => {
+  $('fullscreenModal').classList.remove('open');
+  if (charts._fullscreen) { charts._fullscreen.destroy(); delete charts._fullscreen; }
+});
+$('fullscreenModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'fullscreenModal') {
+    $('fullscreenModal').classList.remove('open');
+    if (charts._fullscreen) { charts._fullscreen.destroy(); delete charts._fullscreen; }
+  }
+});
+
+// Expand buttons — clone chart into fullscreen modal
+document.querySelectorAll('[data-expand]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const chartId = btn.dataset.expand;
+    const sourceChart = charts[chartId];
+    if (!sourceChart) return;
+    $('fullscreenTitle').textContent = '📈 ' + (sourceChart.options?.plugins?.title?.text || chartId);
+    $('fullscreenModal').classList.add('open');
+    // Recreate chart in fullscreen canvas
+    if (charts._fullscreen) charts._fullscreen.destroy();
+    const fsCanvas = $('fullscreenCanvas');
+    charts._fullscreen = new Chart(fsCanvas, {
+      type: sourceChart.config.type,
+      data: JSON.parse(JSON.stringify(sourceChart.data)),
+      options: { ...sourceChart.options, animation: { duration: 400 } },
+    });
+  });
+});
+
+// ── Ripple effect on all buttons ──────────────────────────────
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn');
+  if (!btn) return;
+  const ripple = document.createElement('span');
+  ripple.classList.add('ripple');
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+});
+
+// ── KPI card tilt on mouse move ───────────────────────────────
+document.querySelectorAll('.kpi-card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `translateY(-3px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
