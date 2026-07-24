@@ -23,7 +23,8 @@
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.29.0",
     "chart.js": "^4.5.1",
-    "duckdb": "^1.4.4"
+    "duckdb": "^1.4.4",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "vite": "^6.0.0"

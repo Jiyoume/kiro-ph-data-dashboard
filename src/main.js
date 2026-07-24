@@ -3,8 +3,9 @@ import {
   initDB, loadData,
   getRegions, getFilteredTrend, getFilteredRegions,
   getFilteredProvinces, getHeatmapData, getYoyByRegion,
-  getRankings, getKpis, getFilteredCount, getFilteredCSV,
+  getRankings, getKpis, getFilteredCount, getFilteredCSV, getMapData,
 } from './loader.js';
+import { PhilippinesHeatmap } from './map.js';
 
 Chart.register(...registerables);
 
@@ -42,6 +43,7 @@ const exportPNG   = $('exportPNG');
 let conn = null;
 let currentFilters = { yearMin: 2005, yearMax: 2024, region: '', rowTypes: ['region', 'province_city'] };
 const charts = {};
+let phMap = null;
 
 // ── Helpers ───────────────────────────────────────────────────
 function setStatus(state, msg) { statusEl.className = state; statusText.textContent = msg; }
@@ -111,7 +113,11 @@ function setTheme(t) {
   Chart.defaults.borderColor = t === 'dark' ? '#1e2d48' : '#e8ecf0';
   Chart.defaults.color = t === 'dark' ? '#7b8ba3' : '#64748b';
 }
-themeToggle.addEventListener('click', () => setTheme(getTheme() === 'dark' ? 'light' : 'dark'));
+themeToggle.addEventListener('click', () => {
+  const newTheme = getTheme() === 'dark' ? 'light' : 'dark';
+  setTheme(newTheme);
+  if (phMap) phMap.setTileTheme(newTheme);
+});
 // Restore saved theme
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme) setTheme(savedTheme);
@@ -418,6 +424,57 @@ async function renderHeatmap() {
   });
 }
 
+// ── Interactive Map ───────────────────────────────────────────
+async function renderMap() {
+  const metric = heatmapMetric.value;
+  const metricLabels = { amount_millions: 'Revenue', yoy_pct: 'YoY %', share_of_national_pct: 'Share %' };
+  const mapMetricBtn = document.getElementById('mapMetricLabel');
+  if (mapMetricBtn) mapMetricBtn.textContent = metricLabels[metric] || metric;
+
+  const mapApi = document.getElementById('mapApiInfo');
+  if (mapApi) mapApi.textContent = `API: getMapData(conn, filters, '${metric}') → Leaflet CircleMarkers`;
+
+  // Init map if not yet created
+  if (!phMap) {
+    phMap = new PhilippinesHeatmap('mapContainer');
+    phMap.init();
+  }
+
+  // Update theme
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  phMap.setTileTheme(theme);
+
+  // Fetch data
+  const data = await getMapData(conn, currentFilters, metric);
+
+  // Render circles
+  phMap.render(data, {
+    metric,
+    onRegionClick: (row) => {
+      // Open detail modal with region info
+      const detailTitle = document.getElementById('detailTitle');
+      const detailContent = document.getElementById('detailContent');
+      const formattedVal = metric === 'amount_millions'
+        ? `₱${Number(row.value).toLocaleString('en-PH', { maximumFractionDigits: 0 })}M`
+        : `${Number(row.value).toFixed(2)}%`;
+      detailTitle.textContent = `📍 ${row.region}`;
+      detailContent.innerHTML = `
+        <table class="detail-table">
+          <tr><td style="color:var(--muted)">Metric</td><td><b>${formattedVal}</b></td></tr>
+          <tr><td style="color:var(--muted)">Period</td><td>${row.from_year} – ${row.to_year} (${row.year_count} years)</td></tr>
+          <tr><td style="color:var(--muted)">Source</td><td>DuckDB-WASM query</td></tr>
+        </table>
+        <p style="margin-top:0.75rem;font-size:0.72rem;color:var(--muted);">
+          Click "Apply Filters" with this region selected to see province-level breakdown.
+        </p>`;
+      document.getElementById('detailModal').classList.add('open');
+    },
+  });
+
+  // Resize map after tab switch
+  setTimeout(() => phMap.resize(), 100);
+}
+
 // ── YoY multi-line chart ──────────────────────────────────────
 async function renderYoy() {
   destroyChart('yoy');
@@ -501,6 +558,7 @@ async function renderAll() {
     renderRegionBar(),
     renderProvinces(),
     renderHeatmap(),
+    renderMap(),
     renderYoy(),
     renderRankings(),
   ]);
@@ -530,7 +588,10 @@ async function init() {
     setStatus('ready', `${regions.length} regions · 2005–2024`);
 
     // Listen for heatmap metric change
-    heatmapMetric.addEventListener('change', renderHeatmap);
+    heatmapMetric.addEventListener('change', () => {
+      renderHeatmap();
+      renderMap();
+    });
 
   } catch (err) {
     console.error(err);

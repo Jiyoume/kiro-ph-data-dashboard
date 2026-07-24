@@ -161,3 +161,21 @@ export async function getFilteredCSV(conn, filters) {
     ORDER BY year, region, particulars
   `);
 }
+
+export async function getMapData(conn, filters, metric = 'amount_millions') {
+  const where = buildWhere({ ...filters, rowTypes: ['region'] });
+  const agg = metric === 'amount_millions' ? 'SUM' : 'AVG';
+  return queryRows(conn, `
+    SELECT
+      particulars AS region,
+      ${agg}(${metric}) AS value,
+      COUNT(DISTINCT year) AS year_count,
+      MIN(year) AS from_year,
+      MAX(year) AS to_year
+    FROM collections
+    ${where ? where + ' AND' : 'WHERE'} row_type = 'region'
+      AND particulars != 'Large Taxpayers Service'
+    GROUP BY particulars
+    ORDER BY value DESC
+  `);
+}

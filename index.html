@@ -139,6 +139,14 @@
     .heatmap-tooltip.visible { display:block; }
     .heatmap-api { padding:0.4rem 0.75rem; background:var(--surface2); border-top:1px solid var(--border); font-size:0.6rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; }
 
+    /* ── Map + Table split ────────────── */
+    .heatmap-split { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:1100px) { .heatmap-split { grid-template-columns:1fr; } }
+    .map-card, .table-card { min-height:0; }
+    #mapContainer { background:var(--surface2); }
+    .map-tooltip { background:var(--surface)!important; border:1px solid var(--accent)!important; border-radius:6px!important; padding:0.4rem 0.6rem!important; box-shadow:0 4px 12px rgba(0,0,0,.4)!important; }
+    .heatmap-circle { transition:all .15s ease; cursor:pointer; }
+
     /* ── Modals ───────────────────────── */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:200; backdrop-filter:blur(5px); }
     .modal-overlay.open { display:flex; }
@@ -232,15 +240,22 @@
 
         <!-- Heatmap -->
         <div class="tab-panel" id="tab-heatmap">
-          <div class="chart-card full-width">
-            <h2 id="heatmapTitle">Region × Year Heatmap</h2>
-            <div class="heatmap-wrapper">
-              <div class="heatmap-legend"><span>Low</span><div class="legend-gradient" id="legendGradient"></div><span>High</span><span class="legend-range" id="legendRange"></span></div>
-              <div class="heatmap-container" id="heatmapContainer"><p style="color:var(--muted);padding:2rem;text-align:center;">Loading…</p></div>
-              <div class="heatmap-api" id="heatmapApi">SELECT region, year, SUM(amount_millions) FROM collections GROUP BY region, year</div>
+          <!-- Map + Table split view -->
+          <div class="heatmap-split">
+            <div class="chart-card map-card">
+              <h2>Interactive Map <span class="chart-actions"><button class="btn" id="mapMetricLabel" style="padding:0.15rem 0.5rem;font-size:0.6rem;">Revenue</button></span></h2>
+              <div id="mapContainer" style="height:340px;border-radius:8px;overflow:hidden;border:1px solid var(--border);"></div>
+              <div class="heatmap-api" id="mapApiInfo">API: getMapData(conn, filters, 'amount_millions') → Leaflet CircleMarkers</div>
             </div>
-            <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+            <div class="chart-card table-card">
+              <h2 id="heatmapTitle">Region × Year Grid</h2>
+              <div class="heatmap-wrapper">
+                <div class="heatmap-legend"><span>Low</span><div class="legend-gradient" id="legendGradient"></div><span>High</span><span class="legend-range" id="legendRange"></span></div>
+                <div class="heatmap-container" id="heatmapContainer"><p style="color:var(--muted);padding:1.5rem;text-align:center;">Loading…</p></div>
+              </div>
+            </div>
           </div>
+          <div class="heatmap-tooltip" id="heatmapTooltip"></div>
         </div>
 
         <!-- Trends -->
