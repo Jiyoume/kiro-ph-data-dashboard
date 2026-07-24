@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BIR Revenue Dashboard — PSCG 2005–2024</title>
+    <title>BIR Revenue Dashboard — Interactive</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       :root {
         --bg:        #0d1117;
         --surface:   #161b22;
+        --surface2:  #1c2333;
         --border:    #30363d;
         --text:      #e6edf3;
         --muted:     #7d8590;
@@ -18,6 +19,9 @@
         --red:       #f85149;
         --gold:      #d29922;
         --purple:    #bc8cff;
+        --teal:      #39c5cf;
+        --radius:    10px;
+        --shadow:    0 2px 8px rgba(0,0,0,.3);
       }
 
       body {
@@ -25,310 +29,440 @@
         background: var(--bg);
         color: var(--text);
         min-height: 100vh;
-        padding: 1.5rem 2rem;
+        overflow: hidden;
       }
 
-      /* ── Header ─────────────────────────────── */
+      /* ── Header ─────────────────────────── */
       header {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
+        padding: 1rem 2rem;
         border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        position: sticky;
+        top: 0;
+        z-index: 50;
       }
 
-      .header-left h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--text);
-      }
+      .header-left h1 { font-size: 1.3rem; font-weight: 700; }
+      .header-left p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
-      .header-left p {
-        margin-top: 0.2rem;
-        font-size: 0.8rem;
-        color: var(--muted);
-      }
+      .header-right { display: flex; gap: 0.5rem; align-items: center; }
 
       #status {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        margin-top: 0.5rem;
-        font-size: 0.75rem;
-        color: var(--muted);
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        font-size: 0.72rem; color: var(--muted);
       }
-
-      .dot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: var(--gold);
-        flex-shrink: 0;
-        animation: pulse 1.4s infinite;
-      }
-
-      #status.ready .dot  { background: var(--green); animation: none; }
-      #status.error .dot  { background: var(--red);   animation: none; }
-
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: pulse 1.4s infinite; }
+      #status.ready .dot { background: var(--green); animation: none; }
+      #status.error .dot { background: var(--red); animation: none; }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
 
-      /* ── Controls ───────────────────────────── */
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        align-items: flex-end;
+      /* ── Buttons ────────────────────────── */
+      .btn {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.78rem; font-weight: 500;
+        border-radius: 6px; border: 1px solid var(--border);
+        background: var(--surface2); color: var(--text);
+        cursor: pointer; transition: all .15s;
+      }
+      .btn:hover { background: var(--border); border-color: var(--accent); }
+      .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn-primary:hover { background: #1d6fdb; }
+      .btn svg { width: 14px; height: 14px; }
+
+      /* ── Layout ─────────────────────────── */
+      .layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        height: calc(100vh - 56px);
+        overflow: hidden;
       }
 
-      .control-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .sidebar { position: fixed; left: -300px; top: 56px; bottom: 0; width: 280px; z-index: 40; transition: left .3s; }
+        .sidebar.open { left: 0; }
       }
 
-      .control-group label {
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        color: var(--muted);
+      /* ── Sidebar / Filters ──────────────── */
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 1.25rem;
+        overflow-y: auto;
+        height: 100%;
+      }
+
+      .filter-section { margin-bottom: 1.25rem; }
+      .filter-section h3 {
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em;
+        color: var(--muted); margin-bottom: 0.5rem;
       }
 
       select, input[type=range] {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 6px;
-        padding: 0.4rem 0.65rem;
-        font-size: 0.85rem;
-        cursor: pointer;
-        outline: none;
-        min-width: 200px;
+        width: 100%; background: var(--surface2); border: 1px solid var(--border);
+        color: var(--text); border-radius: 6px; padding: 0.4rem 0.6rem;
+        font-size: 0.82rem; outline: none; cursor: pointer;
       }
-
       select:focus { border-color: var(--accent); }
 
-      .year-display {
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--accent);
-        min-width: 40px;
-        text-align: center;
+      .range-label {
+        display: flex; justify-content: space-between;
+        font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem;
       }
 
-      input[type=range] {
-        padding: 0;
-        min-width: 220px;
-        accent-color: var(--accent);
+      .checkbox-group { display: flex; flex-direction: column; gap: 0.35rem; }
+      .checkbox-group label {
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.82rem; cursor: pointer;
+      }
+      .checkbox-group input[type=checkbox] { accent-color: var(--accent); }
+
+      .filter-actions {
+        display: flex; gap: 0.5rem; margin-top: 1rem;
+        padding-top: 1rem; border-top: 1px solid var(--border);
       }
 
-      /* ── KPI Cards ──────────────────────────── */
+      /* ── Main content ───────────────────── */
+      .main-content {
+        padding: 1.5rem 2rem;
+        overflow-y: auto;
+        height: 100%;
+        scroll-behavior: smooth;
+      }
+
+      /* ── Tabs ───────────────────────────── */
+      .tabs {
+        display: flex; gap: 0; margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .tab-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.82rem; font-weight: 500;
+        color: var(--muted); background: none; border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer; transition: all .15s;
+      }
+      .tab-btn:hover { color: var(--text); }
+      .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+
+      /* ── KPI Cards ──────────────────────── */
       .kpi-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.9rem; margin-bottom: 1.5rem;
       }
-
       .kpi-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 1.1rem 1.25rem;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1rem 1.1rem;
+        transition: transform .2s, box-shadow .2s;
       }
-
+      .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
       .kpi-card .kpi-label {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: var(--muted);
-        margin-bottom: 0.4rem;
+        font-size: 0.68rem; text-transform: uppercase;
+        letter-spacing: .06em; color: var(--muted); margin-bottom: 0.3rem;
       }
-
-      .kpi-card .kpi-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text);
-        line-height: 1.1;
-      }
-
-      .kpi-card .kpi-sub {
-        margin-top: 0.3rem;
-        font-size: 0.75rem;
-        color: var(--muted);
-      }
-
+      .kpi-card .kpi-value { font-size: 1.4rem; font-weight: 700; }
       .kpi-card .kpi-badge {
-        display: inline-block;
-        margin-top: 0.35rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        padding: 0.15rem 0.45rem;
-        border-radius: 999px;
+        display: inline-block; margin-top: 0.3rem;
+        font-size: 0.7rem; font-weight: 600;
+        padding: 0.12rem 0.4rem; border-radius: 999px;
       }
+      .badge-up { background: rgba(63,185,80,.15); color: var(--green); }
+      .badge-down { background: rgba(248,81,73,.15); color: var(--red); }
 
-      .badge-up   { background: rgba(63,185,80,.15); color: var(--green); }
-      .badge-down { background: rgba(248,81,73,.15);  color: var(--red);   }
-
-      /* ── Chart grid ─────────────────────────── */
+      /* ── Chart cards ────────────────────── */
       .charts-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
         gap: 1.25rem;
       }
-
       .chart-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 1.25rem 1.5rem 1.5rem;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1.25rem;
+        transition: box-shadow .2s;
       }
-
-      .chart-card.full-width {
-        grid-column: 1 / -1;
-      }
-
+      .chart-card:hover { box-shadow: var(--shadow); }
+      .chart-card.full-width { grid-column: 1 / -1; }
       .chart-card h2 {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        margin-bottom: 1.1rem;
+        font-size: 0.82rem; font-weight: 600; color: var(--muted);
+        text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1rem;
       }
-
       canvas { max-width: 100%; }
 
-      /* ── Loading overlay ────────────────────── */
+      /* ── Heatmap ────────────────────────── */
+      .heatmap-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 520px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        position: relative;
+      }
+      .heatmap-table {
+        border-collapse: collapse; width: 100%; font-size: 0.72rem;
+      }
+      .heatmap-table th, .heatmap-table td {
+        padding: 0.35rem 0.45rem; text-align: center;
+        border: 1px solid var(--border);
+        transition: transform .1s, box-shadow .1s;
+        cursor: default;
+      }
+      .heatmap-table td:hover {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 2px var(--accent);
+        z-index: 5; position: relative;
+        border-radius: 3px;
+      }
+      .heatmap-table th {
+        background: var(--surface2); color: var(--muted);
+        font-weight: 600; position: sticky; top: 0; z-index: 10;
+      }
+      .heatmap-table .region-label {
+        text-align: left; font-weight: 500; color: var(--text);
+        background: var(--surface2); position: sticky; left: 0; min-width: 160px; z-index: 8;
+      }
+
+      .heatmap-legend {
+        display: flex; align-items: center; gap: 0.6rem;
+        margin-bottom: 0.75rem; font-size: 0.72rem; color: var(--muted);
+      }
+      .legend-gradient {
+        width: 160px; height: 12px; border-radius: 4px;
+        border: 1px solid var(--border);
+      }
+      .legend-label { font-weight: 500; }
+      .legend-range { margin-left: auto; font-size: 0.68rem; }
+
+      .heatmap-tooltip {
+        position: fixed; padding: 0.5rem 0.75rem;
+        background: var(--surface); border: 1px solid var(--accent);
+        border-radius: 6px; font-size: 0.75rem; color: var(--text);
+        pointer-events: none; z-index: 100; display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,.5);
+        max-width: 220px;
+      }
+      .heatmap-tooltip.visible { display: block; }
+
+      .heatmap-api-info {
+        margin-top: 0.75rem; padding: 0.5rem 0.75rem;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 6px; font-size: 0.68rem; color: var(--muted);
+        overflow-x: auto;
+      }
+      .heatmap-api-info code { font-family: 'JetBrains Mono', monospace; }
+
+      /* ── Export modal ───────────────────── */
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,.7);
+        display: none; align-items: center; justify-content: center; z-index: 100;
+      }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; padding: 2rem; width: 90%; max-width: 420px;
+      }
+      .modal h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+      .modal .export-options { display: flex; flex-direction: column; gap: 0.75rem; }
+      .modal .export-option {
+        padding: 0.8rem 1rem; border: 1px solid var(--border);
+        border-radius: 8px; cursor: pointer; transition: all .15s;
+        display: flex; align-items: center; gap: 0.8rem;
+      }
+      .modal .export-option:hover { border-color: var(--accent); background: var(--surface2); }
+      .modal .export-option .icon { font-size: 1.5rem; }
+      .modal .export-option .label { font-weight: 500; }
+      .modal .export-option .desc { font-size: 0.75rem; color: var(--muted); }
+
+      /* ── Loading overlay ────────────────── */
       #loading-overlay {
         position: fixed; inset: 0;
-        background: rgba(13,17,23,.92);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        z-index: 100;
-        transition: opacity .4s;
+        background: rgba(13,17,23,.94);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 1rem; z-index: 200; transition: opacity .4s;
       }
-
       #loading-overlay.hidden { opacity: 0; pointer-events: none; }
-
-      .spinner {
-        width: 40px; height: 40px;
-        border: 3px solid var(--border);
-        border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin .7s linear infinite;
-      }
-
+      .spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
+      #loading-msg { font-size: 0.82rem; color: var(--muted); }
 
-      #loading-msg {
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-
-      /* ── Footer ─────────────────────────────── */
+      /* ── Footer ─────────────────────────── */
       footer {
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border);
-        font-size: 0.72rem;
-        color: var(--muted);
-        line-height: 1.6;
+        padding: 1rem 2rem; border-top: 1px solid var(--border);
+        font-size: 0.7rem; color: var(--muted); text-align: center;
       }
     </style>
   </head>
   <body>
 
+    <!-- Loading -->
     <div id="loading-overlay">
       <div class="spinner"></div>
       <div id="loading-msg">Initializing DuckDB WASM…</div>
     </div>
 
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+      <div class="modal">
+        <h3>Export Report</h3>
+        <div class="export-options">
+          <div class="export-option" id="exportCSV">
+            <div class="icon">📄</div>
+            <div><div class="label">CSV Spreadsheet</div><div class="desc">Filtered data as .csv — opens in Excel</div></div>
+          </div>
+          <div class="export-option" id="exportJSON">
+            <div class="icon">📊</div>
+            <div><div class="label">JSON Data</div><div class="desc">Structured data for API consumption</div></div>
+          </div>
+          <div class="export-option" id="exportPNG">
+            <div class="icon">🖼️</div>
+            <div><div class="label">Dashboard Screenshot (PNG)</div><div class="desc">Current view as image — presentation ready</div></div>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:1.25rem; width:100%; justify-content:center;" id="closeModal">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Header -->
     <header>
       <div class="header-left">
-        <h1>BIR Internal Revenue Collections</h1>
-        <p>Philippines · PSCG 2005–2024 · Amounts in Million Pesos</p>
-        <div id="status">
-          <span class="dot"></span>
-          <span id="status-text">Loading…</span>
-        </div>
+        <h1>BIR Revenue Dashboard</h1>
+        <p>Philippines · PSCG 2005–2024 · Interactive Analytics</p>
+      </div>
+      <div class="header-right">
+        <div id="status"><span class="dot"></span><span id="status-text">Loading…</span></div>
+        <button class="btn" id="btnExport">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
       </div>
     </header>
 
-    <!-- Controls -->
-    <div class="controls">
-      <div class="control-group">
-        <label>Selected Year</label>
-        <div style="display:flex; align-items:center; gap:.75rem;">
-          <input type="range" id="yearSlider" min="2005" max="2024" value="2024" step="1" />
-          <span class="year-display" id="yearDisplay">2024</span>
+    <div class="layout">
+      <!-- Sidebar Filters -->
+      <aside class="sidebar" id="sidebar">
+        <div class="filter-section">
+          <h3>Year Range</h3>
+          <input type="range" id="yearMin" min="2005" max="2024" value="2005" step="1" />
+          <input type="range" id="yearMax" min="2005" max="2024" value="2024" step="1" />
+          <div class="range-label">
+            <span id="yearMinLabel">2005</span>
+            <span>–</span>
+            <span id="yearMaxLabel">2024</span>
+          </div>
         </div>
-      </div>
-      <div class="control-group">
-        <label>Region Detail</label>
-        <select id="regionSelect">
-          <option value="">— All Regions —</option>
-        </select>
+
+        <div class="filter-section">
+          <h3>Region</h3>
+          <select id="regionFilter">
+            <option value="">All Regions</option>
+          </select>
+        </div>
+
+        <div class="filter-section">
+          <h3>Row Type</h3>
+          <div class="checkbox-group" id="rowTypeFilter">
+            <label><input type="checkbox" value="region" checked /> Regions</label>
+            <label><input type="checkbox" value="province_city" checked /> Provinces/Cities</label>
+            <label><input type="checkbox" value="summary" /> Summary Rows</label>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h3>Heatmap Metric</h3>
+          <select id="heatmapMetric">
+            <option value="amount_millions">Revenue (₱M)</option>
+            <option value="yoy_pct">YoY Growth (%)</option>
+            <option value="share_of_national_pct">National Share (%)</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-primary" id="applyFilters" style="flex:1;">Apply Filters</button>
+          <button class="btn" id="resetFilters">Reset</button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="heatmap">Heatmap</button>
+          <button class="tab-btn" data-tab="trends">Trends</button>
+          <button class="tab-btn" data-tab="rankings">Rankings</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <div class="tab-panel active" id="tab-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Net Collection</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-badge" id="kpi-yoy">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Gross Collection</div><div class="kpi-value" id="kpi-gross">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Tax Refund</div><div class="kpi-value" id="kpi-refund">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Top Region</div><div class="kpi-value" id="kpi-top-region" style="font-size:0.95rem;">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Filtered Records</div><div class="kpi-value" id="kpi-records">—</div></div>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-card full-width"><h2>Collection Trend</h2><canvas id="trendChart"></canvas></div>
+            <div class="chart-card"><h2>Revenue by Region</h2><canvas id="regionBarChart"></canvas></div>
+            <div class="chart-card"><h2>Top Provinces / Cities</h2><canvas id="provinceChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tab: Heatmap -->
+        <div class="tab-panel" id="tab-heatmap">
+          <div class="chart-card full-width">
+            <h2 id="heatmapTitle">Region × Year Heatmap — Revenue (₱M)</h2>
+
+            <!-- Heatmap legend -->
+            <div class="heatmap-legend" id="heatmapLegend">
+              <span class="legend-label">Low</span>
+              <div class="legend-gradient" id="legendGradient"></div>
+              <span class="legend-label">High</span>
+              <span class="legend-range" id="legendRange"></span>
+            </div>
+
+            <!-- Heatmap tooltip (follows cursor) -->
+            <div class="heatmap-tooltip" id="heatmapTooltip"></div>
+
+            <!-- Heatmap grid -->
+            <div class="heatmap-container" id="heatmapContainer">
+              <p style="color:var(--muted); padding:2rem; text-align:center;">Loading heatmap…</p>
+            </div>
+
+            <!-- Heatmap API info -->
+            <div class="heatmap-api-info">
+              <code>Query: SELECT region, year, <span id="heatmapQueryMetric">SUM(amount_millions)</span> FROM collections WHERE row_type='region' GROUP BY region, year</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Trends -->
+        <div class="tab-panel" id="tab-trends">
+          <div class="charts-grid">
+            <div class="chart-card full-width"><h2>YoY Growth by Region (%)</h2><canvas id="yoyChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tab: Rankings -->
+        <div class="tab-panel" id="tab-rankings">
+          <div class="charts-grid">
+            <div class="chart-card full-width"><h2>Province Revenue Rankings</h2><canvas id="rankChart"></canvas></div>
+          </div>
+        </div>
+
+        <footer>
+          Source: Bureau of Internal Revenue · PSA–PSCG as of June 2024 · Dashboard powered by DuckDB-WASM + Chart.js
+        </footer>
       </div>
     </div>
-
-    <!-- KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Net Collection</div>
-        <div class="kpi-value" id="kpi-net">—</div>
-        <div class="kpi-badge" id="kpi-yoy">—</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Gross Collection</div>
-        <div class="kpi-value" id="kpi-gross">—</div>
-        <div class="kpi-sub">before tax refunds</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Tax Refund</div>
-        <div class="kpi-value" id="kpi-refund">—</div>
-        <div class="kpi-sub">deducted from gross</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Top Region</div>
-        <div class="kpi-value" id="kpi-top-region" style="font-size:1rem;">—</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Top Province / City</div>
-        <div class="kpi-value" id="kpi-top-province" style="font-size:1rem;">—</div>
-      </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="charts-grid">
-      <div class="chart-card full-width">
-        <h2>National Net Collection Trend (2005–2024)</h2>
-        <canvas id="trendChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 id="regionBarTitle">Revenue by Region</h2>
-        <canvas id="regionBarChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 id="provinceTitle">Top Provinces / Cities</h2>
-        <canvas id="provinceChart"></canvas>
-      </div>
-      <div class="chart-card full-width">
-        <h2>Year-over-Year Growth by Region (% change)</h2>
-        <canvas id="yoyChart"></canvas>
-      </div>
-    </div>
-
-    <footer>
-      Source: Bureau of Internal Revenue · Research and Statistics Division ·
-      Regional and Provincial Summary based on PSA–PSCG as of June 2024.<br>
-      * NCR Large Taxpayers Service consists of the country's largest corporate clients (multinationals and publicly-listed companies).
-    </footer>
 
     <script type="module" src="/src/main.js"></script>
   </body>
