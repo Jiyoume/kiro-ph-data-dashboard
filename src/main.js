@@ -156,7 +156,8 @@ function readFilters() {
 
 applyBtn.addEventListener('click', async () => {
   currentFilters = readFilters();
-  lastHeatmapKey = ''; // Invalidate cache
+  lastHeatmapKey = ''; // Invalidate heatmap cache
+  cachedMapData = null; // Invalidate map cache
   setStatus('', 'Updating…');
   await renderAll();
   setStatus('ready', `Filtered · ${currentFilters.yearMin}–${currentFilters.yearMax}`);
@@ -453,7 +454,7 @@ async function renderMap() {
   const mapApi = document.getElementById('mapApiInfo');
   if (mapApi) mapApi.textContent = `API: getMapData(conn, filters, '${metric}') → Leaflet CircleMarkers`;
 
-  // Init map if not yet created
+  // Init map if not yet created (should already be pre-initialized)
   if (!phMap) {
     phMap = new PhilippinesHeatmap('mapContainer');
     phMap.init();
@@ -463,14 +464,20 @@ async function renderMap() {
   const theme = document.documentElement.getAttribute('data-theme') || 'dark';
   phMap.setTileTheme(theme);
 
-  // Fetch data
-  const data = await getMapData(conn, currentFilters, metric);
+  // Use pre-fetched data if available and metric matches, otherwise fetch fresh
+  let data;
+  if (cachedMapData && cachedMapMetric === metric) {
+    data = cachedMapData;
+  } else {
+    data = await getMapData(conn, currentFilters, metric);
+    cachedMapData = data;
+    cachedMapMetric = metric;
+  }
 
   // Render circles
   phMap.render(data, {
     metric,
     onRegionClick: (row) => {
-      // Open detail modal with region info
       const detailTitle = document.getElementById('detailTitle');
       const detailContent = document.getElementById('detailContent');
       const formattedVal = metric === 'amount_millions'
@@ -490,8 +497,8 @@ async function renderMap() {
     },
   });
 
-  // Resize map after tab switch
-  setTimeout(() => phMap.resize(), 100);
+  // Resize map
+  setTimeout(() => phMap.resize(), 50);
 }
 
 // ── YoY multi-line chart ──────────────────────────────────────
@@ -578,6 +585,7 @@ async function renderAll() {
     renderTrend(),
     renderRegionBar(),
     renderProvinces(),
+    prefetchMapData(), // Pre-fetch map data in background
   ]);
 
   // If user is already on a non-overview tab, render it now
@@ -585,6 +593,16 @@ async function renderAll() {
   if (tab === 'heatmap') { renderHeatmap(); renderMap(); }
   else if (tab === 'trends') { renderYoy(); }
   else if (tab === 'rankings') { renderRankings(); }
+}
+
+// ── Pre-fetch map data so it's ready when user switches to Heatmap tab ──
+let cachedMapData = null;
+let cachedMapMetric = '';
+
+async function prefetchMapData() {
+  const metric = heatmapMetric.value;
+  cachedMapMetric = metric;
+  cachedMapData = await getMapData(conn, currentFilters, metric);
 }
 
 // ── Init ──────────────────────────────────────────────────────
@@ -604,6 +622,10 @@ async function init() {
       regionFilter.appendChild(opt);
     });
 
+    // Pre-initialize map early so tiles start loading in background
+    phMap = new PhilippinesHeatmap('mapContainer');
+    phMap.init();
+
     setLoading('Rendering dashboard…');
     await renderAll();
 
@@ -612,7 +634,8 @@ async function init() {
 
     // Listen for heatmap metric change
     heatmapMetric.addEventListener('change', () => {
-      lastHeatmapKey = ''; // Invalidate cache
+      lastHeatmapKey = ''; // Invalidate heatmap cache
+      cachedMapData = null; // Invalidate map cache
       renderHeatmap();
       renderMap();
     });
