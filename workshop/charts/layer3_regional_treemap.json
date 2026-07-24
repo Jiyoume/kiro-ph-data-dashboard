@@ -1,0 +1,93 @@
+{
+  "data": [
+    {
+      "type": "treemap",
+      "labels": [
+        "NCR (38.7%)",
+        "Region Iii (13.5%)",
+        "Region I (10.9%)",
+        "Region V (8.1%)",
+        "Region Vi (7.8%)",
+        "Region Vii (7.0%)",
+        "Region Xi (5.1%)",
+        "Region Iv-a (3.6%)",
+        "Region Ii (2.6%)",
+        "Region X (2.6%)"
+      ],
+      "parents": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "values": [
+        1317500.5,
+        460000,
+        373000,
+        275001,
+        267000,
+        240001.5,
+        175000,
+        122000.25,
+        89000,
+        88200
+      ],
+      "texttemplate": "<b>%{label}</b><br>₱%{value:,.0f}",
+      "textfont": {
+        "size": 12
+      },
+      "marker": {
+        "colors": [
+          1317500.5,
+          460000,
+          373000,
+          275001,
+          267000,
+          240001.5,
+          175000,
+          122000.25,
+          89000,
+          88200
+        ],
+        "colorscale": [
+          [
+            0,
+            "#CBD5E1"
+          ],
+          [
+            1,
+            "#1E3A8A"
+          ]
+        ],
+        "showscale": false
+      },
+      "hovertemplate": "%{label}<br>₱%{value:,.0f}<br>Customers: 8,3,2,2,2,2,1,2,1,2<extra></extra>"
+    }
+  ],
+  "layout": {
+    "title": {
+      "text": "Regional Revenue Concentration",
+      "font": {
+        "size": 16,
+        "color": "#1E293B"
+      }
+    },
+    "font": {
+      "family": "Inter, system-ui, sans-serif"
+    },
+    "paper_bgcolor": "white",
+    "margin": {
+      "t": 60,
+      "b": 20,
+      "l": 20,
+      "r": 20
+    },
+    "height": 450
+  }
+}

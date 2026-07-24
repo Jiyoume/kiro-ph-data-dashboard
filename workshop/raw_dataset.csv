@@ -1,0 +1,28 @@
+customer_id,full_name,email,region,segment,revenue,order_count,signup_date,status
+C001, Alice Reyes ,alice.reyes@email.com, NCR ,Enterprise,125000.50,42,2021-03-15,active
+C002,Bob Santos,bob.santos@email.com,Region III,SME, 98000 ,31,2020-11-02,Active
+C003, CAROL DIAZ,carol@email.com, ncr,Enterprise,210500.00,67,2022-01-10,ACTIVE
+C001, Alice Reyes ,alice.reyes@email.com, NCR ,Enterprise,125000.50,42,2021-03-15,active
+C004,David Cruz,,Region VII,SME,45000.75,18,2021-07-22,inactive
+C005,Eva Lim,eva.lim@email.com,REGION I,enterprise, 312000 ,89,2019-05-30,Active
+C006,,frank@email.com,Region IV-A,SME,67800.25,25,,active
+C007,Grace Tan,grace.tan@email.com,Region VI,Enterprise,,55,2023-02-14,active
+C008,Henry Go,henry.go@email.com, Region X ,SME,88200.00,33,2022-09-01,INACTIVE
+C009,Iris Flores,iris@email.com,region xi,Enterprise,175000.00,61,2020-06-18,active
+C010,Jose Bautista,jose.b@email.com,NCR,SME, 55500 ,22,2021-12-05,Active
+C011,Karen Santos,karen.s@email.com,Region III,Enterprise,290000.00,78,2018-04-12,active
+C012, Leo Mendoza ,leo.m@email.com,NCR ,SME,N/A,14,2023-08-20,active
+C013,Mia Reyes,mia.reyes@email.com, REGION V,SME,132000.50,47,2022-03-09,Active
+C014,Noel Castro,,Region II,Enterprise,89000.00,,2021-10-17,active
+C015,Olive Santos,olive@email.com,NCR,Enterprise,415000.00,102,2017-11-28,active
+C016,Paul Tan,paul.tan@email.com,region iii,SME,72000.00,29,2020-02-14,Active
+C017,Queenie Lim,,Region VII,Enterprise,195000.75,58,2019-08-05,ACTIVE
+C018,Ralph Cruz,ralph.c@email.com,NCR,SME,43500.00,17,2023-01-30,inactive
+C019,Sara Bautista,sara.b@email.com,REGION VI,Enterprise,267000.00,81,2021-05-22,active
+C020,Tony Mendoza,tony.m@email.com,Region X,SME,,26,2022-07-11,Active
+C003, CAROL DIAZ,carol@email.com, ncr,Enterprise,210500.00,67,2022-01-10,ACTIVE
+C021,Uma Reyes,uma.r@email.com,Region I,SME,61000.00,23,2020-09-03,active
+C022,Victor Santos,victor.s@email.com,NCR,Enterprise,380000.00,95,2018-07-16,active
+C023,Wendy Cruz,wendy.c@email.com,Region IV-A,SME,54200.00,21,2023-05-08,Active
+C024,Xander Lim,,region v,Enterprise,143000.50,52,2021-11-19,active
+C025,Yolanda Tan,yolanda@email.com,NCR,SME, 88000 ,34,2022-04-27,ACTIVE

@@ -1,0 +1,142 @@
+{
+  "data": [
+    {
+      "type": "scatter",
+      "mode": "markers",
+      "x": [
+        102,
+        95,
+        89,
+        78,
+        81,
+        67,
+        58,
+        61,
+        52,
+        42,
+        0,
+        55
+      ],
+      "y": [
+        415000,
+        380000,
+        312000,
+        290000,
+        267000,
+        210500,
+        195000.75,
+        175000,
+        143000.5,
+        125000.5,
+        89000,
+        0
+      ],
+      "text": [
+        "Olive Santos",
+        "Victor Santos",
+        "Eva Lim",
+        "Karen Santos",
+        "Sara Bautista",
+        "Carol Diaz",
+        "Queenie Lim",
+        "Iris Flores",
+        "Xander Lim",
+        "Alice Reyes",
+        "Noel Castro",
+        "Grace Tan"
+      ],
+      "marker": {
+        "size": [
+          51,
+          47.5,
+          44.5,
+          39,
+          40.5,
+          33.5,
+          29,
+          30.5,
+          26,
+          21,
+          10,
+          27.5
+        ],
+        "color": [
+          "#1E3A8A",
+          "#1E3A8A",
+          "#0F766E",
+          "#D97706",
+          "#DC2626",
+          "#1E3A8A",
+          "#7C3AED",
+          "#0891B2",
+          "#059669",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#DC2626"
+        ],
+        "opacity": 0.8
+      },
+      "hovertemplate": "<b>%{text}</b><br>Revenue: ₱%{y:,.0f}<br>Orders: %{x}<extra></extra>"
+    }
+  ],
+  "layout": {
+    "title": {
+      "text": "Enterprise: Revenue vs. Engagement",
+      "font": {
+        "size": 16,
+        "color": "#1E293B"
+      }
+    },
+    "font": {
+      "family": "Inter, system-ui, sans-serif"
+    },
+    "paper_bgcolor": "white",
+    "plot_bgcolor": "#FAFBFC",
+    "xaxis": {
+      "title": "Order Count",
+      "gridcolor": "#F1F5F9"
+    },
+    "yaxis": {
+      "title": "Revenue (₱)",
+      "gridcolor": "#F1F5F9",
+      "tickformat": "₱,.0f"
+    },
+    "shapes": [
+      {
+        "type": "line",
+        "x0": 0,
+        "x1": 1,
+        "xref": "paper",
+        "y0": 210500,
+        "y1": 210500,
+        "line": {
+          "color": "#94A3B8",
+          "dash": "dash",
+          "width": 1.5
+        }
+      }
+    ],
+    "annotations": [
+      {
+        "x": 1,
+        "xref": "paper",
+        "y": 210500,
+        "text": "Median: ₱210,500",
+        "showarrow": false,
+        "font": {
+          "size": 11,
+          "color": "#64748B"
+        },
+        "xanchor": "right"
+      }
+    ],
+    "height": 450,
+    "margin": {
+      "t": 60,
+      "b": 50,
+      "l": 80,
+      "r": 40
+    },
+    "showlegend": false
+  }
+}

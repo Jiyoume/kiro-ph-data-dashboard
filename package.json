@@ -1,0 +1,34 @@
+{
+  "name": "duckdb-dashboard",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "ingest": "node scripts/ingest.mjs",
+    "ingest:db": "node scripts/ingest-db.mjs",
+    "ingest:db:force": "node scripts/ingest-db.mjs --force",
+    "ingest:db:json": "node scripts/ingest-db.mjs --json",
+    "transform": "node scripts/transform.mjs",
+    "export": "node scripts/export-parquet.mjs",
+    "export:table": "node scripts/export-parquet.mjs --table",
+    "workshop:step1": "node workshop/step1_audit.mjs",
+    "workshop:step2": "node workshop/step2_clean.mjs",
+    "workshop:step3": "node workshop/step3_export_validate.mjs",
+    "workshop": "npm run workshop:step1 && npm run workshop:step2 && npm run workshop:step3",
+    "verify": "node scripts/verify.mjs",
+    "pipeline": "npm run ingest && npm run ingest:db && npm run transform && npm run export && npm run verify"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.0",
+    "chart.js": "^4.5.1",
+    "duckdb": "^1.4.4"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "allowScripts": {
+    "duckdb@1.4.4": true
+  }
+}

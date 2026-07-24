@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "type": "pie",
+      "labels": [
+        "ENTERPRISE",
+        "SME"
+      ],
+      "values": [
+        2601501.75,
+        805201.5
+      ],
+      "hole": 0.55,
+      "marker": {
+        "colors": [
+          "#1E3A8A",
+          "#0F766E"
+        ]
+      },
+      "textinfo": "label+percent",
+      "textfont": {
+        "size": 13
+      },
+      "hovertemplate": "%{label}<br>₱%{value:,.0f}<br>%{percent}<extra></extra>"
+    }
+  ],
+  "layout": {
+    "title": {
+      "text": "Revenue Composition by Segment",
+      "font": {
+        "size": 16,
+        "color": "#1E293B"
+      }
+    },
+    "font": {
+      "family": "Inter, system-ui, sans-serif"
+    },
+    "paper_bgcolor": "white",
+    "annotations": [
+      {
+        "text": "<b>₱3.4M</b><br><span style=\"font-size:11px;color:#64748B\">Total Revenue</span>",
+        "x": 0.5,
+        "y": 0.5,
+        "font": {
+          "size": 20,
+          "color": "#1E293B"
+        },
+        "showarrow": false,
+        "xref": "paper",
+        "yref": "paper"
+      }
+    ],
+    "showlegend": true,
+    "legend": {
+      "orientation": "h",
+      "y": -0.05,
+      "x": 0.3
+    },
+    "height": 400,
+    "margin": {
+      "t": 60,
+      "b": 40,
+      "l": 40,
+      "r": 40
+    }
+  }
+}

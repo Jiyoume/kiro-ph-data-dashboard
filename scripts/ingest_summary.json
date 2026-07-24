@@ -1,0 +1,37 @@
+{
+  "source": "C:\\Users\\John Gio Arciaga\\Desktop\\kirow6\\public\\pscg.xlsx",
+  "runAt": "2026-07-24T12:22:00.594Z",
+  "rawRowCount": 184,
+  "droppedRows": {
+    "blank": 0,
+    "footnote": 18,
+    "noData": 2,
+    "duplicate": 1
+  },
+  "cleanedRowCount": 124,
+  "longFormatRowCount": 2480,
+  "rowTypeCounts": {
+    "province_city": {
+      "entities": 101,
+      "records": 2020
+    },
+    "region": {
+      "entities": 17,
+      "records": 340
+    },
+    "summary": {
+      "entities": 6,
+      "records": 120
+    }
+  },
+  "regionCount": 16,
+  "yearRange": [
+    2005,
+    2024
+  ],
+  "nullAmounts": 12,
+  "zeroAmounts": 35,
+  "warnings": [
+    "1 exact duplicate rows removed"
+  ]
+}

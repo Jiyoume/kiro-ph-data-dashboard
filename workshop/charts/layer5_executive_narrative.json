@@ -1,0 +1,14 @@
+{
+  "headline": "₱3.4M Total Portfolio Revenue",
+  "concentration": "Top 3 accounts drive 32% of revenue (₱1.1M), while NCR alone contributes 39% — a dual concentration risk across both customer and geography dimensions.",
+  "disparity": "Enterprise segment out-earns SME by 3.2x (₱2.6M vs ₱0.8M). The top 3 accounts collectively earn 13x more than the bottom 5 — indicating extreme revenue stratification.",
+  "action": "RECOMMENDATION: De-risk through (1) regional expansion into Visayas/Mindanao, (2) SME upsell programs targeting accounts with >30 orders but <₱100K revenue, and (3) enterprise retention investment in the top 5 accounts that represent >40% of the book.",
+  "kpis": {
+    "total_revenue": "₱3,406,703",
+    "top3_concentration": "32%",
+    "ncr_share": "39%",
+    "enterprise_sme_ratio": "3.2x",
+    "customer_count": 25,
+    "region_count": 10
+  }
+}

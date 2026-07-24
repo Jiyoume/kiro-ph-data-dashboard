@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.next/
+out/
+*.db
+*.tmp.parquet
+.vite/
+workshop/dashboard/node_modules/
+workshop/dashboard/.next/
+workshop/dashboard/out/

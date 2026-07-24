@@ -1,0 +1,97 @@
+{
+  "data": [
+    {
+      "type": "bar",
+      "orientation": "h",
+      "x": [
+        132000.5,
+        143000.5,
+        175000,
+        195000.75,
+        210500,
+        267000,
+        290000,
+        312000,
+        380000,
+        415000
+      ],
+      "y": [
+        "Mia Reyes",
+        "Xander Lim",
+        "Iris Flores",
+        "Queenie Lim",
+        "Carol Diaz",
+        "Sara Bautista",
+        "Karen Santos",
+        "Eva Lim",
+        "Victor Santos",
+        "Olive Santos"
+      ],
+      "text": [
+        "₱132,001",
+        "₱143,001",
+        "₱175,000",
+        "₱195,001",
+        "₱210,500",
+        "₱267,000",
+        "₱290,000",
+        "₱312,000",
+        "₱380,000",
+        "₱415,000"
+      ],
+      "textposition": "outside",
+      "textfont": {
+        "size": 11
+      },
+      "marker": {
+        "color": [
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#1E3A8A",
+          "#0F766E"
+        ]
+      },
+      "hovertemplate": "%{y}<br>₱%{x:,.0f}<extra></extra>"
+    }
+  ],
+  "layout": {
+    "title": {
+      "text": "Top 10 Customers by Revenue",
+      "font": {
+        "size": 16,
+        "color": "#1E293B"
+      }
+    },
+    "font": {
+      "family": "Inter, system-ui, sans-serif"
+    },
+    "paper_bgcolor": "white",
+    "plot_bgcolor": "white",
+    "xaxis": {
+      "showgrid": true,
+      "gridcolor": "#F1F5F9",
+      "tickformat": "₱,.0f",
+      "title": null
+    },
+    "yaxis": {
+      "title": null,
+      "tickfont": {
+        "size": 12
+      }
+    },
+    "margin": {
+      "l": 150,
+      "r": 80,
+      "t": 60,
+      "b": 40
+    },
+    "height": 450,
+    "showlegend": false
+  }
+}

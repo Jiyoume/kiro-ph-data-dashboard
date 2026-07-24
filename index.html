@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BIR Revenue Dashboard — PSCG 2005–2024</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg:        #0d1117;
+        --surface:   #161b22;
+        --border:    #30363d;
+        --text:      #e6edf3;
+        --muted:     #7d8590;
+        --accent:    #388bfd;
+        --green:     #3fb950;
+        --red:       #f85149;
+        --gold:      #d29922;
+        --purple:    #bc8cff;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 1.5rem 2rem;
+      }
+
+      /* ── Header ─────────────────────────────── */
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header-left h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .header-left p {
+        margin-top: 0.2rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      #status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--gold);
+        flex-shrink: 0;
+        animation: pulse 1.4s infinite;
+      }
+
+      #status.ready .dot  { background: var(--green); animation: none; }
+      #status.error .dot  { background: var(--red);   animation: none; }
+
+      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+      /* ── Controls ───────────────────────────── */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: flex-end;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .control-group label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+      }
+
+      select, input[type=range] {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        outline: none;
+        min-width: 200px;
+      }
+
+      select:focus { border-color: var(--accent); }
+
+      .year-display {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--accent);
+        min-width: 40px;
+        text-align: center;
+      }
+
+      input[type=range] {
+        padding: 0;
+        min-width: 220px;
+        accent-color: var(--accent);
+      }
+
+      /* ── KPI Cards ──────────────────────────── */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .kpi-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+      }
+
+      .kpi-card .kpi-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--muted);
+        margin-bottom: 0.4rem;
+      }
+
+      .kpi-card .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.1;
+      }
+
+      .kpi-card .kpi-sub {
+        margin-top: 0.3rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .kpi-card .kpi-badge {
+        display: inline-block;
+        margin-top: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+      }
+
+      .badge-up   { background: rgba(63,185,80,.15); color: var(--green); }
+      .badge-down { background: rgba(248,81,73,.15);  color: var(--red);   }
+
+      /* ── Chart grid ─────────────────────────── */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem 1.5rem;
+      }
+
+      .chart-card.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .chart-card h2 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: 1.1rem;
+      }
+
+      canvas { max-width: 100%; }
+
+      /* ── Loading overlay ────────────────────── */
+      #loading-overlay {
+        position: fixed; inset: 0;
+        background: rgba(13,17,23,.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        z-index: 100;
+        transition: opacity .4s;
+      }
+
+      #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+      .spinner {
+        width: 40px; height: 40px;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      #loading-msg {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      /* ── Footer ─────────────────────────────── */
+      footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.72rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div id="loading-msg">Initializing DuckDB WASM…</div>
+    </div>
+
+    <header>
+      <div class="header-left">
+        <h1>BIR Internal Revenue Collections</h1>
+        <p>Philippines · PSCG 2005–2024 · Amounts in Million Pesos</p>
+        <div id="status">
+          <span class="dot"></span>
+          <span id="status-text">Loading…</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-group">
+        <label>Selected Year</label>
+        <div style="display:flex; align-items:center; gap:.75rem;">
+          <input type="range" id="yearSlider" min="2005" max="2024" value="2024" step="1" />
+          <span class="year-display" id="yearDisplay">2024</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Region Detail</label>
+        <select id="regionSelect">
+          <option value="">— All Regions —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Net Collection</div>
+        <div class="kpi-value" id="kpi-net">—</div>
+        <div class="kpi-badge" id="kpi-yoy">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Gross Collection</div>
+        <div class="kpi-value" id="kpi-gross">—</div>
+        <div class="kpi-sub">before tax refunds</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Tax Refund</div>
+        <div class="kpi-value" id="kpi-refund">—</div>
+        <div class="kpi-sub">deducted from gross</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Top Region</div>
+        <div class="kpi-value" id="kpi-top-region" style="font-size:1rem;">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Top Province / City</div>
+        <div class="kpi-value" id="kpi-top-province" style="font-size:1rem;">—</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card full-width">
+        <h2>National Net Collection Trend (2005–2024)</h2>
+        <canvas id="trendChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2 id="regionBarTitle">Revenue by Region</h2>
+        <canvas id="regionBarChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h2 id="provinceTitle">Top Provinces / Cities</h2>
+        <canvas id="provinceChart"></canvas>
+      </div>
+      <div class="chart-card full-width">
+        <h2>Year-over-Year Growth by Region (% change)</h2>
+        <canvas id="yoyChart"></canvas>
+      </div>
+    </div>
+
+    <footer>
+      Source: Bureau of Internal Revenue · Research and Statistics Division ·
+      Regional and Provincial Summary based on PSA–PSCG as of June 2024.<br>
+      * NCR Large Taxpayers Service consists of the country's largest corporate clients (multinationals and publicly-listed companies).
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
