@@ -171,6 +171,48 @@
     .spinner { width:34px; height:34px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
     #loading-msg { font-size:0.75rem; color:var(--muted); }
     footer { padding:0.5rem 1.5rem; border-top:1px solid var(--border); font-size:0.62rem; color:var(--muted); text-align:center; }
+
+    /* ── BAYR Chatbot ─────────────────── */
+    .bayr-fab { position:fixed; bottom:24px; right:24px; width:52px; height:52px; border-radius:50%; cursor:pointer; z-index:150; transition:transform .2s, box-shadow .2s; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+    .bayr-fab:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(79,143,250,.4); }
+    .bayr-fab.hidden { transform:scale(0); pointer-events:none; }
+    .bayr-fab svg { width:100%; height:100%; }
+
+    .bayr-panel { position:fixed; bottom:24px; right:24px; width:360px; height:500px; max-height:calc(100vh - 80px); background:var(--surface); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; z-index:160; box-shadow:0 12px 40px rgba(0,0,0,.5); transform:scale(0) translateY(20px); transform-origin:bottom right; opacity:0; transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s; pointer-events:none; overflow:hidden; }
+    .bayr-panel.open { transform:scale(1) translateY(0); opacity:1; pointer-events:auto; }
+    @media(max-width:480px) { .bayr-panel { width:calc(100vw - 16px); right:8px; bottom:8px; height:calc(100vh - 70px); } }
+
+    .bayr-header { display:flex; align-items:center; gap:0.6rem; padding:0.7rem 1rem; background:var(--surface2); border-bottom:1px solid var(--border); }
+    .bayr-avatar svg { width:28px; height:28px; }
+    .bayr-name { font-size:0.85rem; font-weight:700; }
+    .bayr-subtitle { font-size:0.62rem; color:var(--muted); }
+    .bayr-close { margin-left:auto; background:none; border:none; color:var(--muted); font-size:1.4rem; cursor:pointer; padding:0 0.3rem; }
+    .bayr-close:hover { color:var(--text); }
+
+    .bayr-messages { flex:1; overflow-y:auto; padding:0.8rem; display:flex; flex-direction:column; gap:0.5rem; scrollbar-width:none; }
+    .bayr-messages::-webkit-scrollbar { display:none; }
+
+    .bayr-msg { display:flex; }
+    .bayr-msg.user { justify-content:flex-end; }
+    .bayr-msg.bot { justify-content:flex-start; }
+    .bayr-bubble { max-width:85%; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.76rem; line-height:1.5; animation:fadeUp .2s ease-out; }
+    .bayr-msg.user .bayr-bubble { background:var(--accent); color:#fff; border-bottom-right-radius:3px; }
+    .bayr-msg.bot .bayr-bubble { background:var(--surface2); color:var(--text); border-bottom-left-radius:3px; border:1px solid var(--border); }
+
+    .bayr-msg.typing .bayr-bubble { display:flex; gap:3px; padding:0.6rem 1rem; }
+    .bayr-msg.typing .bayr-bubble span { animation:pulse 1s infinite; font-size:1.2rem; line-height:1; }
+    .bayr-msg.typing .dot-2 { animation-delay:.2s; }
+    .bayr-msg.typing .dot-3 { animation-delay:.4s; }
+
+    .bayr-quick { display:flex; flex-wrap:wrap; gap:0.3rem; padding:0.4rem 0.8rem; border-top:1px solid var(--border); }
+    .bayr-quick-btn { padding:0.25rem 0.55rem; font-size:0.65rem; border-radius:12px; border:1px solid var(--border); background:var(--surface2); color:var(--text); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .bayr-quick-btn:hover { border-color:var(--accent); background:var(--accent-dim); }
+
+    .bayr-input-row { display:flex; gap:0.4rem; padding:0.6rem 0.8rem; border-top:1px solid var(--border); background:var(--surface2); }
+    .bayr-input-row input { flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:0.45rem 0.7rem; font-size:0.78rem; outline:none; }
+    .bayr-input-row input:focus { border-color:var(--accent); }
+    .bayr-send { width:32px; height:32px; border-radius:8px; background:var(--accent); border:none; color:#fff; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .bayr-send:hover { background:#1d6fdb; }
   </style>
 </head>
 <body>

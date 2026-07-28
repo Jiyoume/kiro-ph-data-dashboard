@@ -6,6 +6,7 @@ import {
   getRankings, getKpis, getFilteredCount, getFilteredCSV, getMapData,
 } from './loader.js';
 import { PhilippinesHeatmap } from './map.js';
+import { initBAYR } from './bayr.js';
 
 Chart.register(...registerables);
 
@@ -631,6 +632,9 @@ async function init() {
 
     overlay.classList.add('hidden');
     setStatus('ready', `${regions.length} regions · 2005–2024`);
+
+    // Init BAYR chatbot with live DuckDB connection
+    initBAYR(conn, currentFilters);
 
     // Listen for heatmap metric change
     heatmapMetric.addEventListener('change', () => {
